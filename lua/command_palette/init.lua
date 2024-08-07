@@ -30,7 +30,7 @@ function M.command(title, command, ordinal, init)
   return cmd
 end
 
-function M.command_palette(opts)
+function M.picker(opts)
   pickers
     .new(opts, {
       prompt_title = "Command Palette",
