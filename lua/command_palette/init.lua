@@ -61,7 +61,7 @@ end
 
 function M.setup(sources)
   local commands = {}
-  for item in vim.iter(sources):flatten() do
+  for item in vim.iter(sources) do
     if item["init"] ~= nil then
       log.debug('Run init function for "' .. item["title"] .. '"')
 
