@@ -4,9 +4,14 @@ local actions = require("telescope.actions")
 local actions_state = require("telescope.actions.state")
 local config = require("telescope.config").values
 
+local log = require("plenary.log").new({
+  plugin = "command_palette",
+  level = "info",
+})
+
 local M = {}
 
-function M.command(title, command, ordinal)
+function M.command(title, command, ordinal, init)
   local cmd = {
     title = title,
     command = command,
@@ -18,25 +23,24 @@ function M.command(title, command, ordinal)
     cmd["ordinal"] = title .. ":" .. ordinal
   end
 
+  if init ~= nil then
+    cmd["init"] = init
+  end
+
   return cmd
 end
 
 function M.command_palette(opts)
-  local data = {}
-  for item in vim.iter(M.sources):flatten() do
-    table.insert(data, item)
-  end
-
   pickers
     .new(opts, {
       prompt_title = "Command Palette",
       finder = finders.new_table({
-        results = data,
+        results = M.commands,
         entry_maker = function(entity)
           return {
-            value = entity,
             display = entity.title,
             ordinal = entity.ordinal,
+            entity = entity,
           }
         end,
       }),
@@ -47,7 +51,7 @@ function M.command_palette(opts)
           actions.close(prompt_bufnr)
 
           -- run user function
-          selection.value.command()
+          selection.entity.command()
         end)
         return true
       end,
@@ -56,7 +60,17 @@ function M.command_palette(opts)
 end
 
 function M.setup(sources)
-  M.sources = sources
+  local commands = {}
+  for item in vim.iter(sources):flatten() do
+    if item["init"] ~= nil then
+      log.debug('Run init function for "' .. item["title"] .. '"')
+
+      -- run command's initialization function
+      item["init"]()
+    end
+    table.insert(commands, item)
+  end
+  M.commands = commands
 end
 
 return M
